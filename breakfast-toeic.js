@@ -30,6 +30,59 @@ introQuiz=function(){mode='quiz';quiz=null;update();$('#app').innerHTML=`<div cl
 renderQuestion=function(){const q=quiz,w=q.questions[q.pos];q.answered=false;q.showText=false;q.options=shuffle([w,...shuffle(words.filter(x=>x.id!==w.id)).slice(0,3)]);$('#app').innerHTML=`<div class="quiz toeic-quiz"><span class="eyebrow">LISTENING PRACTICE · ${String(q.pos+1).padStart(2,'0')} / ${q.questions.length}</span><h2>Choose the best description.</h2><p>聽完 A–D，選出最符合圖片的描述。</p><div class="illustration">${quizArt(w.en)}</div><div class="audio-tools"><button class="listen" id="playOptions">◖))　播放四個選項</button><button class="listen small" id="showTranscript">顯示英文逐字稿</button></div><div class="quiz-options">${q.options.map((o,i)=>`<button class="option" data-answer="${o.id}" aria-label="選擇 ${'ABCD'[i]}"><span>${'ABCD'[i]}</span><b class="option-text" lang="en" hidden>${toeic[o.id][3]}</b><b class="option-placeholder">選擇 ${'ABCD'[i]}</b></button>`).join('')}</div><div class="quiz-feedback" role="status" aria-live="polite"></div><button class="know-btn" id="nextQuestion" hidden>Next　→</button></div>`;document.querySelectorAll('[data-answer]').forEach(btn=>btn.onclick=()=>answer(Number(btn.dataset.answer)));$('#playOptions').onclick=()=>speak(q.options.map((o,i)=>`${'ABCD'[i]}. ${toeic[o.id][3]}`).join(' ... '));$('#showTranscript').onclick=()=>{q.showText=!q.showText;document.querySelectorAll('.option-text').forEach(e=>e.hidden=!q.showText);document.querySelectorAll('.option-placeholder').forEach(e=>e.hidden=q.showText);$('#showTranscript').textContent=q.showText?'隱藏英文逐字稿':'顯示英文逐字稿'};$('#nextQuestion').onclick=()=>{if('speechSynthesis' in window)speechSynthesis.cancel();q.pos++;if(q.pos===q.questions.length)renderResult();else renderQuestion()}};
 answer=function(id){const q=quiz;if(!q||q.answered)return;q.answered=true;if('speechSynthesis' in window)speechSynthesis.cancel();const w=q.questions[q.pos],correct=id===w.id;if(correct)q.score++;else q.wrong.push(w);document.querySelectorAll('[data-answer]').forEach(b=>{b.disabled=true;const n=Number(b.dataset.answer);if(n===w.id)b.classList.add('correct');else if(n===id)b.classList.add('wrong')});document.querySelectorAll('.option-text').forEach(e=>e.hidden=false);document.querySelectorAll('.option-placeholder').forEach(e=>e.hidden=true);$('#showTranscript').hidden=true;$('.quiz-feedback').innerHTML=`<strong>${correct?'✓ Correct!':'Keep practicing.'} Answer: ${'ABCD'[q.options.findIndex(o=>o.id===w.id)]}</strong><p lang="en">${toeic[w.id][3]}</p><p>${toeic[w.id][4]}</p><p class="answer-note">辨識重點：${w.en}（${w.zh}）。其餘三句描述的是其他圖片；判斷時需同時核對物品、形狀與位置。</p><button class="listen small" id="answerAudio" style="display:inline-flex">◖))　聽正確描述</button>`;$('#answerAudio').onclick=()=>speak(toeic[w.id][3]);$('#nextQuestion').hidden=false;$('#nextQuestion').textContent=q.pos===q.questions.length-1?'View results　→':'Next　→'};
 const baseRenderResult=renderResult;
-renderResult=function(){baseRenderResult();$('.quiz .eyebrow').textContent='PRACTICE RESULTS · 練習答對題數';const note=document.createElement('p');note.className='practice-note';note.textContent='此為原創練習成績，不換算多益正式分數。';$('.quiz').appendChild(note)};
+renderResult = function () {
+  baseRenderResult();
+  const result = $('#app .quiz');
+  result.querySelector('.eyebrow').textContent = 'PRACTICE RESULTS · 練習答對題數';
+  const reviewList = result.querySelector('.review-list');
+
+  if (quiz.wrong.length) {
+    const review = document.createElement('section');
+    review.className = 'toeic-review';
+    review.setAttribute('aria-labelledby', 'toeic-review-title');
+    review.innerHTML = `
+      <h3 id="toeic-review-title">錯題解析（${quiz.wrong.length} 題）</h3>
+      ${quiz.wrong.map(word => {
+        const [, , , description, translation] = toeic[word.id];
+        return `
+          <details>
+            <summary><span lang="en">${word.en}</span> · ${word.zh}</summary>
+            <div class="toeic-review-detail">
+              ${art(word.en)}
+              <div>
+                <p class="toeic-review-answer" lang="en">${description}</p>
+                <p>${translation}</p>
+                <button type="button" class="listen small" data-review-audio="${word.id}">聽正確描述</button>
+              </div>
+            </div>
+          </details>`;
+      }).join('')}`;
+    review.querySelectorAll('[data-review-audio]').forEach(button => {
+      button.onclick = () => speak(toeic[Number(button.dataset.reviewAudio)][3]);
+    });
+    reviewList.replaceWith(review);
+
+    const retry = result.querySelector('#retryWrong');
+    const startReview = retry.onclick;
+    retry.onclick = () => {
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      startReview();
+      const question = $('#app h2');
+      question.tabIndex = -1;
+      question.focus();
+    };
+  } else {
+    reviewList.remove();
+  }
+
+  const note = document.createElement('p');
+  note.className = 'practice-note';
+  note.textContent = '此為原創練習成績，不換算多益正式分數。';
+  result.append(note);
+
+  const heading = result.querySelector('h2');
+  heading.tabIndex = -1;
+  heading.focus();
+};
 $('#learnTab').onclick=()=>{quiz=null;renderLearn()};$('#quizTab').onclick=introQuiz;
 renderLearn();

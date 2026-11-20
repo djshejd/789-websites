@@ -66,3 +66,58 @@ h1{font-size:clamp(28px,4.2vw,47px)}.intro{overflow:hidden}@media(max-width:650p
     grid-template-columns: minmax(0, 60px) minmax(0, 1fr);
   }
 }
+
+.toeic-score-track {
+  width: min(180px, 70%);
+  height: 6px;
+  margin: -10px auto 18px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #e7edf4;
+}
+
+.toeic-score-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toeic-results .score {
+    animation: toeic-rise-in 360ms ease-out;
+  }
+
+  .toeic-score-fill {
+    transform-origin: left;
+    animation: toeic-fill-in 600ms ease-out;
+  }
+
+  .toeic-review > details {
+    animation: toeic-rise-in 300ms ease-out both;
+  }
+
+  .toeic-review > details:nth-of-type(2) {
+    animation-delay: 60ms;
+  }
+
+  .toeic-review > details:nth-of-type(n + 3) {
+    animation-delay: 120ms;
+  }
+
+  .toeic-review details[open] .toeic-review-detail {
+    animation: toeic-rise-in 220ms ease-out;
+  }
+
+  @keyframes toeic-rise-in {
+    from {
+      opacity: 0.55;
+      transform: translateY(8px);
+    }
+  }
+
+  @keyframes toeic-fill-in {
+    from {
+      transform: scaleX(0);
+    }
+  }
+}

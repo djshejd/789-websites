@@ -33,7 +33,18 @@ const baseRenderResult=renderResult;
 renderResult = function () {
   baseRenderResult();
   const result = $('#app .quiz');
+  result.classList.add('toeic-results');
   result.querySelector('.eyebrow').textContent = 'PRACTICE RESULTS · 練習答對題數';
+
+  const scoreTrack = document.createElement('div');
+  scoreTrack.className = 'toeic-score-track';
+  scoreTrack.setAttribute('aria-hidden', 'true');
+  const scoreFill = document.createElement('div');
+  scoreFill.className = 'toeic-score-fill';
+  scoreFill.style.width = `${quiz.score / quiz.questions.length * 100}%`;
+  scoreTrack.append(scoreFill);
+  result.querySelector('.score').after(scoreTrack);
+
   const reviewList = result.querySelector('.review-list');
 
   if (quiz.wrong.length) {

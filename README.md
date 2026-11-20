@@ -5,6 +5,7 @@ GitHub Pages 靜態網站。
 - `index.html`：入口首頁
 - `breakfast.html`：早餐英文與多益練習
 - `taitung.html`：慢遊台東
+- [`car-care/`](car-care/)：里程誌汽車保養紀錄 App；使用方式見 [說明](car-care/README.md)。
 
 在 Settings → Pages 選擇 Deploy from a branch，分支 main，資料夾 / (root)，儲存即可。
 

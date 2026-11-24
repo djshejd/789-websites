@@ -1,5 +1,7 @@
 (function(root){
  const categories=['定期保養','維修','耗材更換','檢驗／其他'];
+ const photoLimit=240000;
+ const isVehiclePhoto=value=>typeof value==='string'&&value.length<=photoLimit&&/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]+={0,2}$/.test(value);
  const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  function date(value,optional=false){if(optional&&!value)return '';if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))throw Error('日期格式不正確');const d=new Date(value+'T00:00:00Z');if(!Number.isFinite(d.getTime())||d.toISOString().slice(0,10)!==value)throw Error('日期不存在');return value;}
  function num(value,optional=false){if(optional&&(value===''||value==null))return null;const n=Number(value);if(!Number.isFinite(n)||n<0||n>1000000000)throw Error('金額或里程超出範圍');return n;}
@@ -7,7 +9,10 @@
  function normalize(raw){
   if(!raw||raw.version!==1||!Array.isArray(raw.vehicles)||!Array.isArray(raw.records)||!Array.isArray(raw.reminders)||raw.vehicles.length>100||raw.records.length>10000||raw.reminders.length>10000)throw Error('這不是有效的里程誌備份檔');
   const id=v=>{if(typeof v!=='string'||!/^[a-zA-Z0-9_-]{1,100}$/.test(v))throw Error('紀錄識別碼無效');return v;};
-  const vehicles=raw.vehicles.map(v=>({id:id(v.id),name:text(v.name,100).trim(),plate:text(v.plate,30),year:text(v.year,4),mileage:Math.round(num(v.mileage))}));
+  const vehicles=raw.vehicles.map(v=>({
+   id:id(v.id),name:text(v.name,100).trim(),plate:text(v.plate,30),year:text(v.year,4),mileage:Math.round(num(v.mileage)),
+   ...(isVehiclePhoto(v.photo)?{photo:v.photo}:{})
+  }));
   if(vehicles.some(v=>!v.name))throw Error('車輛名稱不能空白');
   const vehicleIds=new Set(vehicles.map(v=>v.id));if(vehicleIds.size!==vehicles.length)throw Error('車輛識別碼重複');
   const records=raw.records.map(r=>({id:id(r.id),vehicleId:id(r.vehicleId),date:date(r.date),mileage:Math.round(num(r.mileage)),category:categories.includes(r.category)?r.category:'檢驗／其他',items:text(r.items,300).trim(),cost:Math.round(num(r.cost)*100)/100,shop:text(r.shop,100),notes:text(r.notes),createdAt:text(r.createdAt,40)}));
@@ -24,5 +29,17 @@
   if((days!==null&&days<=30)||(km!==null&&km<=500))return {kind:'soon',label:'即將到期',rank:1,days,km};
   return {kind:'normal',label:'已排程',rank:2,days,km};
  }
- const api={categories,today,date,num,normalize,reminderStatus};if(typeof module==='object'&&module.exports)module.exports=api;else root.DriveModel=api;
+ function maintenanceSummary(records,vehicleId,year){
+  const byCategory=Object.fromEntries(categories.map(category=>[category,0]));
+  let count=0,total=0,latest='';
+  for(const record of records){
+   if(record.vehicleId!==vehicleId||(year!=='all'&&record.date.slice(0,4)!==year))continue;
+   count++;
+   total+=record.cost;
+   byCategory[record.category]+=record.cost;
+   if(record.date>latest)latest=record.date;
+  }
+  return {count,total,latest,byCategory};
+ }
+ const api={categories,today,date,num,normalize,reminderStatus,maintenanceSummary,photoLimit,isVehiclePhoto};if(typeof module==='object'&&module.exports)module.exports=api;else root.DriveModel=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

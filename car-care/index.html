@@ -1,6 +1,44 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#172b3a"><meta name="description" content="里程誌，隨手記下汽車保養、維修費用與下次提醒。"><title>里程誌 DriveLog｜汽車保養紀錄</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="style.css"><script src="model.js" defer></script><script src="app.js" defer></script></head><body>
-<aside class="sidebar"><a class="brand" href="#overview"><span class="brand-icon">D<span></span></span><span>里程誌<small>DRIVELOG</small></span></a><p class="nav-label">我的車輛管理</p><nav class="desktop-nav" aria-label="主選單"><a href="#overview" data-page="overview"><span data-icon="dashboard"></span>車輛總覽</a><a href="#records" data-page="records"><span data-icon="clipboard"></span>保養紀錄</a><a href="#reminders" data-page="reminders"><span data-icon="bell"></span>保養提醒<span class="nav-badge" id="due-badge"></span></a><a href="#settings" data-page="settings"><span data-icon="settings"></span>車輛與備份</a></nav><div class="side-note"><span data-icon="shield"></span><strong>好好照顧每一段里程</strong><p>紀錄留在這個瀏覽器。<br>定期匯出，讓回憶有備份。</p></div><small class="side-footer">DRIVE MORE. WORRY LESS.</small></aside>
+<!doctype html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#172b3a"><meta name="description" content="里程誌，隨手記下汽車保養、維修費用與下次提醒。"><title>里程誌 DriveLog｜汽車保養紀錄</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="style.css"><script src="model.js" defer></script><script src="vendor/read-excel-file.min.js" defer></script><script src="import.js" defer></script><script src="photo-import.js" defer></script><script src="app.js" defer></script></head><body>
+<aside class="sidebar"><a class="brand" href="#overview"><span class="brand-icon">D<span></span></span><span>里程誌<small>DRIVELOG</small></span></a><p class="nav-label">我的車輛管理</p><nav class="desktop-nav" aria-label="主選單"><a href="#overview" data-page="overview"><span data-icon="dashboard"></span>車輛總覽</a><a href="#records" data-page="records"><span data-icon="clipboard"></span>保養紀錄</a><a href="#reminders" data-page="reminders"><span data-icon="bell"></span>保養提醒<span class="nav-badge" id="due-badge"></span></a><a href="#compare" data-page="compare"><span data-icon="compare"></span>車輛比較</a><a href="#settings" data-page="settings"><span data-icon="settings"></span>車輛與備份</a></nav><div class="side-note"><span data-icon="shield"></span><strong>好好照顧每一段里程</strong><p>紀錄留在這個瀏覽器。<br>定期匯出，讓回憶有備份。</p></div><small class="side-footer">DRIVE MORE. WORRY LESS.</small></aside>
 <div class="app-shell"><header class="topbar"><a class="mobile-brand" href="#overview">里程誌<span>DRIVELOG</span></a><span class="top-context">汽車保養・生活紀錄</span><div class="top-tools"><span class="local-badge"><span data-icon="shield"></span>本機儲存</span><button class="button small" data-action="new-record"><span data-icon="plus"></span>新增紀錄</button></div></header><main id="main" tabindex="-1"><div class="page-heading"><div><div id="page-kicker" class="kicker">YOUR GARAGE, AT A GLANCE</div><h1 id="page-title">每一段里程，都值得照顧。</h1><p id="page-description">保養、維修與花費，一次掌握。</p></div><label class="vehicle-switch"><span>目前車輛</span><select id="vehicle-select" aria-label="選擇目前車輛"></select></label></div><div id="storage-warning" class="warning" hidden></div><div id="content"></div></main><footer class="app-footer">里程誌 DriveLog <span>為下一段旅程，留一份安心。</span></footer></div>
-<nav class="bottom-nav" aria-label="手機導覽"><a href="#overview" data-page="overview"><span data-icon="dashboard"></span>總覽</a><a href="#records" data-page="records"><span data-icon="clipboard"></span>紀錄</a><a href="#reminders" data-page="reminders"><span data-icon="bell"></span>提醒</a><a href="#settings" data-page="settings"><span data-icon="settings"></span>設定</a></nav>
+<nav class="bottom-nav" aria-label="手機導覽"><a href="#overview" data-page="overview"><span data-icon="dashboard"></span>總覽</a><a href="#records" data-page="records"><span data-icon="clipboard"></span>紀錄</a><a href="#reminders" data-page="reminders"><span data-icon="bell"></span>提醒</a><a href="#compare" data-page="compare"><span data-icon="compare"></span>比較</a><a href="#settings" data-page="settings"><span data-icon="settings"></span>設定</a></nav>
 <dialog id="editor" aria-labelledby="editor-title"><div class="dialog-heading"><div><span id="editor-kicker" class="kicker">DRIVELOG</span><h2 id="editor-title"></h2></div><button type="button" class="close-button" data-action="close" aria-label="關閉表單">×</button></div><form id="editor-form"></form></dialog><dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title"><h2 id="confirm-title">確認刪除</h2><p id="confirm-message"></p><div class="form-actions"><button class="button secondary" id="confirm-cancel">取消</button><button class="button danger" id="confirm-delete">確認刪除</button></div></dialog><div id="toast" role="status" aria-live="polite"></div><input id="import-file" type="file" accept="application/json,.json" hidden>
+<dialog id="sheet-import" aria-labelledby="sheet-title">
+  <div class="dialog-heading">
+    <h2 id="sheet-title">匯入保養表單</h2>
+    <button type="button" class="close-button" data-action="close-sheet" aria-label="關閉匯入表單">×</button>
+  </div>
+  <p class="sheet-intro" id="sheet-context"></p>
+  <label class="form-field">
+    <span>選擇 Excel、CSV 或照片</span>
+    <input id="sheet-file" type="file" accept=".xlsx,.csv,.jpg,.jpeg,.png,.webp" aria-describedby="sheet-help">
+  </label>
+  <p class="helper-note" id="sheet-help">試算表須有日期、里程、項目三欄。照片支援 JPG、PNG、WebP，請每次選一張清晰的保養單。資料會在此裝置處理。</p>
+  <button type="button" class="link-button" data-action="sheet-template">下載 CSV 欄位範本</button>
+  <p id="sheet-message" class="sheet-message" role="status"></p>
+  <form id="photo-review" class="photo-review" aria-labelledby="photo-review-title" hidden>
+    <h3 id="photo-review-title">核對照片辨識結果</h3>
+    <p class="helper-note">請對照照片補齊或修正欄位。費用留白時會記為 0 元。</p>
+    <div class="form-grid">
+      <label class="form-field"><span>保養日期 *</span><input name="date" required placeholder="例如：2026/10/15"></label>
+      <label class="form-field"><span>里程（km）*</span><input name="mileage" required inputmode="numeric"></label>
+    </div>
+    <label class="form-field"><span>保養／維修項目 *</span><input name="items" required maxlength="300"></label>
+    <div class="form-grid">
+      <label class="form-field"><span>費用（NT$）</span><input name="cost" inputmode="decimal"></label>
+      <label class="form-field"><span>車牌</span><input name="plate" maxlength="30"></label>
+    </div>
+    <label class="form-field"><span>保養廠／店家</span><input name="shop" maxlength="100"></label>
+    <details class="sheet-issues">
+      <summary>查看完整辨識文字</summary>
+      <pre id="photo-text"></pre>
+    </details>
+    <button class="button secondary" type="submit">預覽分類</button>
+  </form>
+  <div id="sheet-preview"></div>
+  <div class="form-actions">
+    <button type="button" class="button secondary" data-action="close-sheet">取消</button>
+    <button type="button" class="button" id="sheet-save" disabled>確認匯入</button>
+  </div>
+</dialog>
 </body></html>
